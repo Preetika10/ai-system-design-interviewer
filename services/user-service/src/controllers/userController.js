@@ -1,8 +1,8 @@
-const pool = require("../config/db");
-const bcrypt = require("bcryptjs");
+import pool from "../config/db.js";
+import bcrypt  from "bcryptjs";
 
 // Register user
-exports.registerUser = async (req, res) => {
+export async function registerUser(req, res) {
   const { name, email, password } = req.body;
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -13,12 +13,12 @@ exports.registerUser = async (req, res) => {
   );
 
   res.json(result.rows[0]);
-};
+}
 
 // Login User
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 
-exports.loginUser = async (req, res) => {
+export async function loginUser(req, res) {
   const { email, password } = req.body;
 
   const user = await pool.query(
@@ -46,4 +46,22 @@ exports.loginUser = async (req, res) => {
   );
 
   res.json({ token });
+}
+
+export async function getProfile(req, res) {
+  try {
+    const user = await pool.query(
+      "SELECT id, name, email, created_at FROM users WHERE id = $1",
+      [req.userId]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
